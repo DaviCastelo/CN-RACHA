@@ -78,6 +78,14 @@ body {
   color: var(--primary);
 }
 
+.players-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -147,6 +155,11 @@ button.danger {
   color: #fff1e8;
 }
 
+.whatsapp-button {
+  background: linear-gradient(180deg, #2dcc71, #1ea85a);
+  color: #062814;
+}
+
 .hint {
   margin: 8px 0 0;
   color: var(--text-soft);
@@ -164,19 +177,42 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .player-row {
   display: grid;
-  grid-template-columns: 1fr 90px 80px 110px;
+  grid-template-columns: minmax(0, 1fr) 78px 62px 44px;
   gap: 8px;
+  align-items: center;
+  padding: 6px 0;
 }
 
 .stars {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: var(--primary);
   font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.toggle-list {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.icon-danger {
+  background: #8f4733;
+  border: 1px solid #a85b45;
+  color: #ffffff;
+  border-radius: 10px;
+  height: 38px;
+  width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .message {
@@ -212,7 +248,15 @@ button.danger {
 }
 
 @media (max-width: 680px) {
+  .players-header {
+    align-items: stretch;
+  }
+
+  .toggle-list {
+    width: 100%;
+  }
+
   .player-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 72px 54px 42px;
   }
 }

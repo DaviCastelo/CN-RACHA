@@ -21,11 +21,13 @@ function App() {
   const [importText, setImportText] = useState("");
   const [message, setMessage] = useState<string>("");
   const [result, setResult] = useState<BalanceResult | null>(null);
+  const [isPlayersListOpen, setIsPlayersListOpen] = useState(false);
 
   const requiredPlayers = useMemo(
     () => config.numberOfTeams * config.playersPerTeam,
     [config.numberOfTeams, config.playersPerTeam],
   );
+  const hasPlayers = players.length > 0;
 
   function addManualPlayer() {
     const name = normalizePlayerName(nameInput);
@@ -109,6 +111,26 @@ function App() {
     const balanced = generateBalancedTeams(players, config.numberOfTeams, config.playersPerTeam);
     setResult(balanced);
     setMessage("Times gerados com sucesso.");
+  }
+
+  function buildTeamsShareText(teams: BalanceResult["teams"]): string {
+    const header = "⚽ Racha CN - Times sorteados";
+    const teamsLines = teams.map((team) => {
+      const playersList = team.players.map((player) => `- ${player.name}`).join("\n");
+      return `\n${team.name}\n${playersList}`;
+    });
+    return `${header}\n${teamsLines.join("\n")}`;
+  }
+
+  function shareOnWhatsApp() {
+    if (!result) {
+      return;
+    }
+
+    const messageText = buildTeamsShareText(result.teams);
+    const encodedText = encodeURIComponent(messageText);
+    const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -196,19 +218,38 @@ function App() {
       </section>
 
       <section className="card">
-        <h2>
-          Jogadores Cadastrados ({players.length}/{requiredPlayers})
-        </h2>
-        {players.length === 0 ? (
-          <p className="hint">Nenhum jogador cadastrado.</p>
-        ) : (
+        <div className="players-header">
+          <h2>
+            Jogadores Cadastrados ({players.length}/{requiredPlayers})
+          </h2>
+          {hasPlayers ? (
+            <button
+              type="button"
+              className="toggle-list"
+              onClick={() => setIsPlayersListOpen((prev) => !prev)}
+              aria-expanded={isPlayersListOpen}
+            >
+              {isPlayersListOpen ? "Ocultar lista" : "Ver jogadores"}
+            </button>
+          ) : null}
+        </div>
+        {!hasPlayers && <p className="hint">Nenhum jogador cadastrado.</p>}
+        {hasPlayers && !isPlayersListOpen && (
+          <p className="hint">Lista recolhida para facilitar visualização no celular.</p>
+        )}
+        {hasPlayers && isPlayersListOpen && (
           <div className="player-list">
             {players.map((player) => (
               <div key={player.id} className="player-row">
-                <input value={player.name} onChange={(event) => updatePlayer(player.id, { name: event.target.value })} />
+                <input
+                  value={player.name}
+                  onChange={(event) => updatePlayer(player.id, { name: event.target.value })}
+                  aria-label={`Nome do jogador ${player.name}`}
+                />
                 <select
                   value={player.stars}
                   onChange={(event) => updatePlayer(player.id, { stars: Number(event.target.value) as StarLevel })}
+                  aria-label={`Estrelas do jogador ${player.name}`}
                 >
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -217,8 +258,14 @@ function App() {
                   <option value={5}>5</option>
                 </select>
                 <span className="stars">{starsToText(player.stars)}</span>
-                <button type="button" className="danger" onClick={() => removePlayer(player.id)}>
-                  Remover
+                <button
+                  type="button"
+                  className="icon-danger"
+                  onClick={() => removePlayer(player.id)}
+                  aria-label={`Remover jogador ${player.name}`}
+                  title={`Remover ${player.name}`}
+                >
+                  🗑
                 </button>
               </div>
             ))}
@@ -239,6 +286,11 @@ function App() {
       {result ? (
         <section className="card">
           <h2>Resultado</h2>
+          <div className="actions">
+            <button type="button" className="whatsapp-button" onClick={shareOnWhatsApp}>
+              Compartilhar no WhatsApp
+            </button>
+          </div>
           <p className="hint">
             Diferença de soma: {result.scoreGap} | Diferença de média: {result.averageGap.toFixed(2)}
           </p>
