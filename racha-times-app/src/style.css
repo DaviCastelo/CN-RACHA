@@ -217,8 +217,72 @@ button.danger {
 
 .message {
   margin: 0;
-  color: var(--primary);
+  color: inherit;
+  font-weight: 700;
+}
+
+.message-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  border: 1px solid;
+  padding: 12px 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+}
+
+.message-icon {
+  font-size: 1.1rem;
+}
+
+.message-banner-error {
+  background: rgba(143, 71, 51, 0.34);
+  border-color: #d7866f;
+  color: #ffe3d7;
+}
+
+.message-banner-success {
+  background: rgba(56, 122, 79, 0.34);
+  border-color: #6cc594;
+  color: #d9ffe9;
+}
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(6, 4, 3, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.popup-card {
+  width: min(92vw, 480px);
+  background: linear-gradient(180deg, #3a2419, #2a1912);
+  border: 1px solid #d7866f;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
+  color: #ffe3d7;
+}
+
+.popup-card h3 {
+  margin: 0 0 10px;
+  color: #ffd2c2;
+}
+
+.popup-card p {
+  margin: 0;
+  line-height: 1.45;
   font-weight: 600;
+}
+
+.popup-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .teams-grid {

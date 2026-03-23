@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import type { AppConfig, BalanceResult, Player, StarLevel } from "./types/domain";
 import { generateBalancedTeams } from "./utils/balancer";
 import { parsePlayersFromTemplate } from "./utils/parser";
@@ -20,6 +21,8 @@ function App() {
   const [starsInput, setStarsInput] = useState<StarLevel>(3);
   const [importText, setImportText] = useState("");
   const [message, setMessage] = useState<string>("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
+  const [errorPopup, setErrorPopup] = useState<string | null>(null);
   const [result, setResult] = useState<BalanceResult | null>(null);
   const [isPlayersListOpen, setIsPlayersListOpen] = useState(false);
 
@@ -29,10 +32,16 @@ function App() {
   );
   const hasPlayers = players.length > 0;
 
+  function showErrorPopup(errorMessage: string) {
+    setMessageType("error");
+    setMessage("");
+    setErrorPopup(errorMessage);
+  }
+
   function addManualPlayer() {
     const name = normalizePlayerName(nameInput);
     if (!name) {
-      setMessage("Informe o nome do jogador.");
+      showErrorPopup("Informe o nome do jogador.");
       return;
     }
 
@@ -46,6 +55,8 @@ function App() {
     setNameInput("");
     setStarsInput(3);
     setResult(null);
+    setMessageType("success");
+    setErrorPopup(null);
     setMessage("Jogador adicionado.");
   }
 
@@ -53,17 +64,19 @@ function App() {
     try {
       const parsed = parsePlayersFromTemplate(importText);
       if (!parsed.players.length) {
-        setMessage("Nenhum jogador válido encontrado na importação.");
+        showErrorPopup("Nenhum jogador válido encontrado na importação.");
         return;
       }
       setPlayers(parsed.players);
       setResult(null);
+      setMessageType("success");
+      setErrorPopup(null);
       setMessage(
         `Importados ${parsed.players.length} jogadores.` +
           (parsed.ignoredLines.length ? ` Linhas ignoradas: ${parsed.ignoredLines.length}.` : ""),
       );
     } catch {
-      setMessage("Falha ao importar a lista. Verifique o formato e tente novamente.");
+      showErrorPopup("Falha ao importar a lista. Verifique o formato e tente novamente.");
     }
   }
 
@@ -91,6 +104,8 @@ function App() {
   function resetSession() {
     setPlayers([]);
     setImportText("");
+    setMessageType("success");
+    setErrorPopup(null);
     setMessage("Sessão resetada.");
     setResult(null);
   }
@@ -98,18 +113,20 @@ function App() {
   function createTeams() {
     const configError = validateConfig(config);
     if (configError) {
-      setMessage(configError);
+      showErrorPopup(configError);
       return;
     }
 
     const playersError = validatePlayersCount(config, players);
     if (playersError) {
-      setMessage(playersError);
+      showErrorPopup(playersError);
       return;
     }
 
     const balanced = generateBalancedTeams(players, config.numberOfTeams, config.playersPerTeam);
     setResult(balanced);
+    setMessageType("success");
+    setErrorPopup(null);
     setMessage("Times gerados com sucesso.");
   }
 
@@ -131,6 +148,18 @@ function App() {
     const encodedText = encodeURIComponent(messageText);
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+  }
+
+  let feedbackNode: ReactNode = null;
+  if (message) {
+    if (messageType === "success") {
+      feedbackNode = (
+        <output className="message-banner message-banner-success" aria-live="polite">
+          <span className="message-icon">✅</span>
+          <p className="message">{message}</p>
+        </output>
+      );
+    }
   }
 
   return (
@@ -281,7 +310,21 @@ function App() {
         </div>
       </section>
 
-      {message ? <p className="message">{message}</p> : null}
+      {feedbackNode}
+
+      {errorPopup ? (
+        <div className="popup-overlay">
+          <dialog className="popup-card" open aria-labelledby="error-popup-title">
+            <h3 id="error-popup-title">Atenção</h3>
+            <p>{errorPopup}</p>
+            <div className="popup-actions">
+              <button type="button" className="danger" onClick={() => setErrorPopup(null)}>
+                Fechar
+              </button>
+            </div>
+          </dialog>
+        </div>
+      ) : null}
 
       {result ? (
         <section className="card">
