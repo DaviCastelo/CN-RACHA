@@ -6,6 +6,15 @@ interface TeamBucket {
   players: Player[];
 }
 
+interface ObjectiveMetrics {
+  totalVariance: number;
+  averageVariance: number;
+  starDistributionPenalty: number;
+  strongWeakPenalty: number;
+  scoreGap: number;
+  averageGap: number;
+}
+
 function shuffleWithSeed<T>(items: T[]): T[] {
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -41,6 +50,81 @@ function computeGaps(buckets: TeamBucket[]): { scoreGap: number; averageGap: num
   return { scoreGap, averageGap };
 }
 
+function variance(values: number[]): number {
+  if (!values.length) {
+    return 0;
+  }
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+}
+
+function getStarCounts(players: Player[]): number[] {
+  const counts = [0, 0, 0, 0, 0];
+  for (const player of players) {
+    counts[player.stars - 1] += 1;
+  }
+  return counts;
+}
+
+function computeStarDistributionPenalty(buckets: TeamBucket[]): number {
+  const totalPlayers = buckets.flatMap((bucket) => bucket.players);
+  const totalCounts = getStarCounts(totalPlayers);
+  const teamCount = buckets.length;
+
+  let penalty = 0;
+  for (const bucket of buckets) {
+    const teamCounts = getStarCounts(bucket.players);
+    for (let i = 0; i < totalCounts.length; i += 1) {
+      const expected = totalCounts[i] / teamCount;
+      penalty += Math.abs(teamCounts[i] - expected);
+    }
+  }
+  return penalty;
+}
+
+function computeStrongWeakPenalty(buckets: TeamBucket[]): number {
+  const strongCounts = buckets.map(
+    (bucket) => bucket.players.filter((player) => player.stars >= 4).length,
+  );
+  const weakCounts = buckets.map(
+    (bucket) => bucket.players.filter((player) => player.stars <= 2).length,
+  );
+  return variance(strongCounts) + variance(weakCounts);
+}
+
+function evaluateObjective(buckets: TeamBucket[]): ObjectiveMetrics {
+  const teams = toTeams(buckets);
+  const totals = teams.map((team) => team.totalStars);
+  const avgs = teams.map((team) => team.averageStars);
+  const scoreGap = Math.max(...totals) - Math.min(...totals);
+  const averageGap = Math.max(...avgs) - Math.min(...avgs);
+
+  const totalVariance = variance(totals);
+  const averageVariance = variance(avgs);
+  const starDistributionPenalty = computeStarDistributionPenalty(buckets);
+  const strongWeakPenalty = computeStrongWeakPenalty(buckets);
+
+  return {
+    totalVariance,
+    averageVariance,
+    starDistributionPenalty,
+    strongWeakPenalty,
+    scoreGap,
+    averageGap,
+  };
+}
+
+function objectiveScore(metrics: ObjectiveMetrics): number {
+  return (
+    metrics.totalVariance * 1.25 +
+    metrics.averageVariance * 1.5 +
+    metrics.starDistributionPenalty * 0.7 +
+    metrics.strongWeakPenalty * 0.9 +
+    metrics.scoreGap * 0.8 +
+    metrics.averageGap * 0.6
+  );
+}
+
 type BestSwap =
   | {
       i: number;
@@ -52,7 +136,8 @@ type BestSwap =
   | undefined;
 
 function findBestSwap(buckets: TeamBucket[]): BestSwap {
-  const current = computeGaps(buckets);
+  const currentMetrics = evaluateObjective(buckets);
+  const currentScore = objectiveScore(currentMetrics);
   let bestSwap: BestSwap;
 
   for (let i = 0; i < buckets.length; i += 1) {
@@ -62,13 +147,14 @@ function findBestSwap(buckets: TeamBucket[]): BestSwap {
       for (let aIndex = 0; aIndex < teamA.players.length; aIndex += 1) {
         for (let bIndex = 0; bIndex < teamB.players.length; bIndex += 1) {
           [teamA.players[aIndex], teamB.players[bIndex]] = [teamB.players[bIndex], teamA.players[aIndex]];
-          const next = computeGaps(buckets);
-          const gain = current.scoreGap - next.scoreGap + (current.averageGap - next.averageGap) * 0.25;
+            const nextMetrics = evaluateObjective(buckets);
+            const nextScore = objectiveScore(nextMetrics);
+            const gain = currentScore - nextScore;
           [teamA.players[aIndex], teamB.players[bIndex]] = [teamB.players[bIndex], teamA.players[aIndex]];
 
-          if (!bestSwap || gain > bestSwap.gain) {
-            bestSwap = { i, j, aIndex, bIndex, gain };
-          }
+            if (!bestSwap || gain > bestSwap.gain) {
+              bestSwap = { i, j, aIndex, bIndex, gain };
+            }
         }
       }
     }
@@ -77,11 +163,7 @@ function findBestSwap(buckets: TeamBucket[]): BestSwap {
   return bestSwap;
 }
 
-export function generateBalancedTeams(
-  players: Player[],
-  numberOfTeams: number,
-  playersPerTeam: number,
-): BalanceResult {
+function createInitialBuckets(players: Player[], numberOfTeams: number, playersPerTeam: number): TeamBucket[] {
   const groupedByStarsDesc = [...players].sort((a, b) => b.stars - a.stars);
   const shuffledInsideTier = shuffleWithSeed(groupedByStarsDesc);
 
@@ -102,8 +184,20 @@ export function generateBalancedTeams(
     possibleTeams[0].players.push(player);
   }
 
-  // Melhoria local por trocas 1x1 enquanto reduzir o gap.
+  return buckets;
+}
+
+function cloneBuckets(buckets: TeamBucket[]): TeamBucket[] {
+  return buckets.map((bucket) => ({
+    ...bucket,
+    players: [...bucket.players],
+  }));
+}
+
+function optimizeWithLocalSwaps(initialBuckets: TeamBucket[]): TeamBucket[] {
+  const buckets = cloneBuckets(initialBuckets);
   let improved = true;
+
   while (improved) {
     improved = false;
     const bestSwap = findBestSwap(buckets);
@@ -118,7 +212,43 @@ export function generateBalancedTeams(
     }
   }
 
-  const teams = toTeams(buckets);
-  const { scoreGap, averageGap } = computeGaps(buckets);
+  return buckets;
+}
+
+function getAttemptCount(totalPlayers: number): number {
+  if (totalPlayers <= 10) {
+    return 240;
+  }
+  if (totalPlayers <= 20) {
+    return 180;
+  }
+  if (totalPlayers <= 30) {
+    return 130;
+  }
+  return 90;
+}
+
+export function generateBalancedTeams(
+  players: Player[],
+  numberOfTeams: number,
+  playersPerTeam: number,
+): BalanceResult {
+  const attemptCount = getAttemptCount(players.length);
+  let bestBuckets = optimizeWithLocalSwaps(createInitialBuckets(players, numberOfTeams, playersPerTeam));
+  let bestScore = objectiveScore(evaluateObjective(bestBuckets));
+
+  for (let i = 1; i < attemptCount; i += 1) {
+    const candidateBuckets = optimizeWithLocalSwaps(
+      createInitialBuckets(players, numberOfTeams, playersPerTeam),
+    );
+    const candidateScore = objectiveScore(evaluateObjective(candidateBuckets));
+    if (candidateScore < bestScore) {
+      bestScore = candidateScore;
+      bestBuckets = candidateBuckets;
+    }
+  }
+
+  const teams = toTeams(bestBuckets);
+  const { scoreGap, averageGap } = computeGaps(bestBuckets);
   return { teams, scoreGap, averageGap };
 }
