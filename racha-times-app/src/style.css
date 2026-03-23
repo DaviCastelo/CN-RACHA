@@ -1,0 +1,218 @@
+:root {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --bg: #120d0a;
+  --surface: #20150f;
+  --surface-soft: #2e1f16;
+  --border: #9f7a45;
+  --text: #f3e5bf;
+  --text-soft: #d7c28e;
+  --primary: #d7b56a;
+  --primary-strong: #c69d4f;
+  --danger: #b45e45;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #2e1f16 0%, #120d0a 45%, #0a0705 100%);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  color: var(--primary);
+  text-align: center;
+}
+
+.app-header p {
+  margin: 0;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.brand-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 4px #0f0a07, 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(46, 31, 22, 0.92), rgba(32, 21, 15, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: var(--primary);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.grow {
+  flex: 1;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  color: var(--text);
+  border: 1px solid #7f6134;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(18, 13, 10, 0.85);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--primary), var(--primary-strong));
+  color: #24170f;
+  font-weight: 700;
+}
+
+button.muted {
+  background: #7d6840;
+  color: #ffffff;
+}
+
+button.danger {
+  background: var(--danger);
+  color: #fff1e8;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 80px 110px;
+  gap: 8px;
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.message {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.team-card {
+  border: 1px solid #7f6134;
+  background: rgba(18, 13, 10, 0.75);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.team-card h3 {
+  margin: 0 0 8px;
+}
+
+.team-card p {
+  margin: 0 0 8px;
+}
+
+.team-card ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+@media (max-width: 680px) {
+  .player-row {
+    grid-template-columns: 1fr;
+  }
+}
