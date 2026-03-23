@@ -167,7 +167,7 @@ function App() {
       <header className="app-header">
         <img className="brand-logo" src="/logo-cn.png" alt="Logo Racha CN" />
         <h1>Racha Comunidade das Nações</h1>
-        <p>Monte times equilibrados por estrelas para sua pelada.</p>
+        <p>Monte times equilibrados por estrelas para seu racha.</p>
       </header>
 
       <section className="card">
